@@ -1,0 +1,31 @@
+package config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+
+@Configuration
+@EnableWebFluxSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity serverHttpSecurity)
+    {
+        // Disable CSRF protection
+        serverHttpSecurity.csrf(csrf -> csrf.disable());
+
+        // Secure the endpoints
+        serverHttpSecurity.authorizeExchange(exchange -> exchange
+                .pathMatchers("/eureka/**").permitAll()  // Allow Eureka requests without authentication For static resources like CSS, styles, etc
+                .anyExchange().authenticated()           // All other requests must be authenticated
+        );
+
+        // Enable JWT authentication for OAuth2 Resource Server
+        serverHttpSecurity.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+        return serverHttpSecurity.build();
+    }
+
+}
