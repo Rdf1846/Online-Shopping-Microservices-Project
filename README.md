@@ -58,7 +58,7 @@ The project consists of the following Spring Boot microservices, each responsibl
 
 ## Architecture Diagram
 
-![Architecture Diagram](ProjectArchitecture.png)
+![Architecture Diagram](resources/images/system-architecture.jpeg)
 
 ---
 
@@ -106,10 +106,9 @@ Before setting up the project, ensure you have the following tools installed:
 Clone the repository using the following commands:
 
 ```bash
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
+git clone https://github.com/Rdf1846/Online-Shopping-Microservices-Project
+```
 
-# Microservices Project
 
 ## Environment Setup
 
@@ -139,9 +138,8 @@ To start all the services with Docker Compose, run:
 
 ```bash
 docker-compose up --build
+```
 
-
-# Microservices Project
 
 ## Running the Application
 
