@@ -1,8 +1,6 @@
 package com.microserviceProject.OrderService.service;
 
 import com.microserviceProject.OrderService.dto.InventoryResponse;
-//import com.microserviceProject.OrderService.dto.InventoryResponseDto;
-//import com.microserviceProject.InventoryService.dto.InventoryResponseDto;
 import com.microserviceProject.OrderService.dto.OrderLineItemsDto;
 import com.microserviceProject.OrderService.dto.OrderRequestDto;
 import com.microserviceProject.OrderService.event.OrderPlacedEvent;
@@ -14,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
