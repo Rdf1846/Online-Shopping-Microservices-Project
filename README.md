@@ -58,7 +58,7 @@ The project consists of the following Spring Boot microservices, each responsibl
 
 ## Architecture Diagram
 
-![Architecture Diagram](ProjectArchitecture.png)
+![Architecture Diagram](Project Architecture.png)
 
 ---
 
