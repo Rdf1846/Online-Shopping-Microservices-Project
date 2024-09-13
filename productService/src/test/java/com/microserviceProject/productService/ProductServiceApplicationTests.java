@@ -119,7 +119,7 @@ class ProductServiceApplicationTests {
 				new TypeReference<List<ProductResponseDto>>() {});
 
 		//validates the response contains the expected no of products
-		Assertions.assertEquals(2, productResponseDtoList.size());
+		Assertions.assertEquals(3, productResponseDtoList.size());
 
 
 	}

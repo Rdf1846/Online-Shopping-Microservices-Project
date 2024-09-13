@@ -41,3 +41,66 @@ services:
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
       DYNAMIC_CONFIG_ENABLED: 'true'
 
+##Eureka Discovery Server
+  discovery-server:
+    image: rdfgujjar/discovery-server:latest
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    depends_on:
+#      -zipkin
+
+## api-gateway
+  api-gateway:
+    image: rdfgujjar/api-gateway:latest
+    container_name: api-gateway
+    ports:
+      - "8181:8080"
+    expose:
+      - "8181"
+    depends_on:
+      - discovery-server
+
+## Prodcut service
+  product-service:
+    image: rdfgujjar/product-service:latest
+    container_name: product-service
+    depends_on:
+      - discovery-server
+      - api-gateway
+
+## order service
+  order-service:
+      image: rdfgujjar/order-service:latest
+      container_name: order-service
+      depends_on:
+        - discovery-server
+        - api-gateway
+        - kafkaBroker
+
+## inventory service
+  inventory-service:
+    image: rdfgujjar/inventory-service:latest
+    container_name: inventory-service
+    depends_on:
+      - discovery-server
+      - api-gateway
+
+## notification service
+  notification-service:
+    image: rdfgujjar/notification-service:latest
+    container_name: notification-service
+    depends_on:
+      - discovery-server
+      - api-gateway
+      - kafkaBroker
+
+
+
+
+
+
+
+
