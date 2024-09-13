@@ -58,7 +58,7 @@ The project consists of the following Spring Boot microservices, each responsibl
 
 ## Architecture Diagram
 
-![Architecture Diagram](Project Architecture.png)
+![Architecture Diagram]([Project Architecture.png](https://github.com/Rdf1846/Online-Shopping-Microservices-Project/blob/main/Project%20Architecture.png))
 
 ---
 
