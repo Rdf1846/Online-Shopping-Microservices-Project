@@ -24,11 +24,11 @@ public class InventoryService {
     private final InventoryRepository inventoryRepository;
 
     @Transactional(readOnly = true)
-    @SneakyThrows
+//    @SneakyThrows
     public List<InventoryResponseDto> inStockOrNot(List<String> skuCode) {
-        logger.info("wait started");
-//        Thread.sleep(10000);
-        logger.info("wait ended");
+//        logger.info("wait started");
+////        Thread.sleep(10000);
+//        logger.info("wait ended");
 
 
         logger.info("Sku codes in inventory service are: {}"+skuCode);
