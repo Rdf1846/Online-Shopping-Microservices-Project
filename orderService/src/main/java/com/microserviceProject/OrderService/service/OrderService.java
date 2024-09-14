@@ -84,9 +84,13 @@ public class OrderService {
         if (unavailableProducts.isEmpty()) {
             // All products are in stock, proceed with the order
             orderRepository.save(order);
-            //Send the message to kafka - order number
+            logger.info("Product available= true, so saving the product in order table");
 
+            logger.info("order placed, sending the kafka topic to the consumer - which is notificationService to send the message to customer");
+            //Send the message to kafka - order number
             kafkaTemplate.send("notificationTopic", new OrderPlacedEvent(order.getOrderNumber()));
+
+            logger.info("kafka topic successfully sent!");
 
             return "Order placed successfully. All products are in stock.";
         } else {
@@ -94,8 +98,15 @@ public class OrderService {
             String unavailableMessage = String.join(", ", unavailableProducts);
             String availableMessage = String.join(", ", availableProducts);
 
-            return "The following products are not in stock: " + unavailableMessage +
-                    ". The products available in our stock are: " + availableMessage;
+            if(availableMessage.isEmpty())
+            {
+                return "The following products are not in stock: " + unavailableMessage;
+            }
+            else {
+
+                return "The following products are not in stock: " + unavailableMessage +
+                        ". The products available in our stock are: " + availableMessage;
+            }
         }
 
     }

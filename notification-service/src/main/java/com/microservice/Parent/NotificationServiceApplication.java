@@ -13,6 +13,7 @@ public class NotificationServiceApplication {
         SpringApplication.run(NotificationServiceApplication.class, args);
     }
 
+    // KafkaListener listens for events from the 'notificationTopic'
     @KafkaListener(topics ="notificationTopic")
     public void handleNotification(OrderPlacedEvent orderPlacedEvent)
     {
