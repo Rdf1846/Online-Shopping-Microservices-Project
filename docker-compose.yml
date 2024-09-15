@@ -1,5 +1,7 @@
-version: '4'
+version: '4' # Specifying the Docker-Compose version
 services:
+
+### kafka zookeeper to keep an eye and details about kafka brokers
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     hostname: zookeeper
@@ -10,7 +12,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
 
-
+### kafka broker to receive kafka topic from producer(OrderService in our case) and send to consumer(notificationService in our case)
   kafkaBroker:
     image: confluentinc/cp-kafka:7.5.0
     container_name: kafkaBroker
@@ -27,7 +29,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       #KAFKA_LOG_RETENTION_HOURS: 168
 
-
+### kafka-ui to visualize kafka topic, message inside topic, consumer details., etc related things on UI on the mentioned hostname & port
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
@@ -41,18 +43,107 @@ services:
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
       DYNAMIC_CONFIG_ENABLED: 'true'
 
-##Eureka Discovery Server
+
+### Mongodb container for product service
+  mongo-db-service:         # Service name (used for internal networking between containers in docker env)
+      image: mongo:latest   # Use the latest MongoDB image
+      container_name: mongodb-container-product-service #a simple human-readable container name
+      environment: #setting up database related properties
+        MONGO_INITDB_ROOT_USERNAME: root        # Default MongoDB root username
+        MONGO_INITDB_ROOT_PASSWORD: rootpassword # Default MongoDB root password
+        MONGO_INITDB_DATABASE: product-service-db      # Name of the database to create
+      ports:    #This option maps a port on the host machine (your local machine or server) to a port inside the container. - "27017:27017": This is a host-to-container port mapping. The first 27017 is the host port, which means port 27017 on the host machine will be used. The second 27017 is the container port, which refers to port 27017 inside the MongoDB container.
+        - "27017:27017"        # Expose MongoDB on port 27017, This allows external applications on the host machine to connect to the MongoDB instance inside the container through localhost:27017
+      expose:
+        - "27017"   #This exposes a port to other Docker containers on the same network, but not to the host machine or the outside world. expose: - "27017": This means the MongoDB container exposes port 27017 to other containers in the same Docker network. This doesn't publish the port to the host machine, so external applications cannot access MongoDB via this exposed port. It’s only accessible to other Docker containers. If outside docker environment, someone wants to access the container they to access it via the port mentioned in localhostPort, in the 'ports - "localhostPort:dockerPort" property.
+      volumes:           #volumes allows us to store data outside container, in a filesystem; so that data will not be lost even when container stops or restarts, since container doesn't store the data after they stop or removed - ephemeral.
+        - ./productService-mongodb_data:/data/db  # Store MongoDB data on a named volume on localhost machine in the directory where docker-compose.yml is present. Here (.) is refering that volume to be created in localhost, if you don't provide (.) dot then it will create the volume inside docker container.
+      restart: unless-stopped #This instructs Docker to always automatically restart the MongoDB container until it is stopped manually. If it stops or crashes for any reason, then it will restart automatically. But Be careful with this in development, if you set its value as 'always' -then it will continuously restart the container even if you stop it manually.
+
+### MySql database container for inventory service
+  mysql-service-inventory:
+      image: mysql:8.0      # Use MySQL 8.0 image (or change to a different version if needed)
+      container_name: mysql-db-inventory
+      environment:
+        MYSQL_ROOT_PASSWORD: admin      # Set the MySQL root password
+        MYSQL_DATABASE: inventory-service     # Create a database at startup
+        MYSQL_USER: user                      # Create a user
+        MYSQL_PASSWORD: userpassword          # Set the password for the new user
+      ports:
+        - "3306:3306"        # Expose MySQL on port 3306
+      expose:
+        - "3306"
+      volumes:
+        - ./Mysql_inventory_db_data:/var/lib/mysql               # Persist MySQL data in a Docker volume
+        - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Mount the init.sql file
+      restart: unless-stopped
+
+  ## MySql database container for order service
+  mysql-service-order:
+    image: mysql:8.0      # Use MySQL 8.0 image (or change to a different version if needed)
+    container_name: mysql-db-order
+    environment:
+      MYSQL_ROOT_PASSWORD: admin      # Set the MySQL root password
+      MYSQL_DATABASE: order-service     # Create a database at startup
+      MYSQL_USER: user                      # Create a user
+      MYSQL_PASSWORD: userpassword          # Set the password for the new user
+    ports:
+      - "3307:3306"        # Expose MySQL on port 3306
+    expose:
+      - "3306"
+    volumes:
+      - ./Mysql_order_db_data:/var/lib/mysql               # Persist MySQL data in a Docker volume
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Mount the init.sql file
+    restart: unless-stopped
+
+  # MySQL Database for storing Keycloak data like clients details, client secret, etc
+  mysql-keycloak-data-store:
+    image: mysql:8.0
+    container_name: keycloak-mysql-database
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: keycloak_db
+      MYSQL_USER: keycloak
+      MYSQL_PASSWORD: keycloakpassword
+    volumes:
+      - ./mysql_keycloak_data:/var/lib/mysql
+
+
+    # Keycloak service to create keycloak instance
+  keycloak:
+      image: quay.io/keycloak/keycloak:25.0.0
+      container_name: keycloak
+      command: [ "start-dev", "--import-realm" ]
+      environment:
+        DB_VENDOR: MYSQL
+        DB_ADDR: mysql-keycloak-data-store
+        DB_DATABASE: keycloak_db
+        DB_USER: keycloak
+        DB_PASSWORD: keycloakpassword
+        KEYCLOAK_ADMIN: admin
+        KEYCLOAK_ADMIN_PASSWORD: admin
+      ports:
+        - "8080:8080"
+      volumes:
+        - ./realms/:/opt/keycloak/data/import/
+      depends_on:
+        - mysql-keycloak-data-store
+
+
+
+  ### Eureka Discovery Server
   discovery-server:
     image: rdfgujjar/discovery-server:latest
     container_name: discovery-server
     ports:
       - "8761:8761"
-#    environment:
-#      - SPRING_PROFILES_ACTIVE=docker
-#    depends_on:
-#      -zipkin
+    environment:
+      - EUREKA_USERNAME=eureka
+      - EUREKA_PASSWORD=password
+      - SPRING_PROFILES_ACTIVE=docker
 
-## api-gateway
+
+### api-gateway service
   api-gateway:
     image: rdfgujjar/api-gateway:latest
     container_name: api-gateway
@@ -60,47 +151,61 @@ services:
       - "8181:8080"
     expose:
       - "8181"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY= TRACE
     depends_on:
       - discovery-server
+      - keycloak
 
-## Prodcut service
+## Product service
   product-service:
     image: rdfgujjar/product-service:latest
     container_name: product-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
     depends_on:
+      - mongo-db-service
       - discovery-server
       - api-gateway
 
-## order service
-  order-service:
-      image: rdfgujjar/order-service:latest
-      container_name: order-service
-      depends_on:
-        - discovery-server
-        - api-gateway
-        - kafkaBroker
 
 ## inventory service
   inventory-service:
     image: rdfgujjar/inventory-service:latest
     container_name: inventory-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-service-inventory:3306/inventory-service
+    depends_on:
+      - mysql-service-inventory
+      - discovery-server
+      - api-gateway
+
+
+## order service
+  order-service:
+    image: rdfgujjar/order-service:latest
+    container_name: order-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - sSPRING_DATASOURCE_URL=jdbc:mysql://mysql-service-order:3306/order-service
     depends_on:
       - discovery-server
       - api-gateway
+      - kafkaBroker
+      - inventory-service
+      - notification-service
+      - mysql-service-order
+
 
 ## notification service
   notification-service:
     image: rdfgujjar/notification-service:latest
     container_name: notification-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
     depends_on:
       - discovery-server
       - api-gateway
       - kafkaBroker
-
-
-
-
-
-
-
-
